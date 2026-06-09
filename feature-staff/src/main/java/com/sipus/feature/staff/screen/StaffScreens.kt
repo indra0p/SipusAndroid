@@ -13,6 +13,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -28,6 +29,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -67,11 +69,13 @@ fun StaffDashboardScreen(state: StaffUiState, onNavigate: (String) -> Unit, onRe
                 StatCard("Denda", (state.dashboard?.totalDendaBelumLunas ?: 0.0).toRupiah(), Icons.Outlined.Warning, StatusError, Modifier.weight(1f))
             }
         }
+
         item { Text("Menu Petugas", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold) }
         item {
             val menus = listOf(
                 Triple("Scan QR", Icons.Outlined.QrCodeScanner, "scan"),
                 Triple("Persetujuan", Icons.Outlined.Checklist, "approvals"),
+                Triple("Statistik", Icons.Outlined.BarChart, "analytics"),
                 Triple("Pengunjung", Icons.Outlined.People, "visitors"),
                 Triple("Cari Anggota", Icons.Outlined.PersonSearch, "search_patron"),
             )
@@ -85,6 +89,149 @@ fun StaffDashboardScreen(state: StaffUiState, onNavigate: (String) -> Unit, onRe
                 }
             }
         }
+    }
+}
+
+@Composable
+fun StaffAnalyticsScreen(
+    state: StaffUiState,
+    onBack: () -> Unit
+) {
+    Scaffold(
+        topBar = { SipusTopBar("Statistik & Laporan", onBack = onBack) }
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // General Overview Metrics
+            item {
+                Text(
+                    text = "Ikhtisar Perpustakaan",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            item {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                ) {
+                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            MetricItem("Pengunjung Hari Ini", "${state.dashboard?.pengunjungHariIni ?: 0}", Icons.Outlined.HistoryEdu, Primary)
+                            MetricItem("Dispute Tertunda", "${state.dashboard?.disputePending ?: 0}", Icons.Outlined.Rule, StatusError)
+                        }
+                        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            MetricItem("Buku Dipinjam", "${state.dashboard?.pinjamanAktif ?: 0}", Icons.Outlined.MenuBook, Secondary)
+                            MetricItem("Keterlambatan", "${state.dashboard?.peminjamanTerlambat ?: 0}", Icons.Outlined.Alarm, StatusError)
+                        }
+                    }
+                }
+            }
+
+            // Popular Books Chart
+            item {
+                Text(
+                    text = "Buku Paling Populer",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            item {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+                        state.dashboard?.bukuPopuler?.let { populer ->
+                            if (populer.isNotEmpty()) {
+                                populer.forEach { book ->
+                                    SimpleBarChartItem(book.judul, book.total, populer.maxOfOrNull { it.total } ?: 1)
+                                    Spacer(Modifier.height(12.dp))
+                                }
+                            } else {
+                                EmptyScreen("Belum ada data populer", Icons.Outlined.PieChart)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Financial Summary (Optional based on existing data)
+            item {
+                Text(
+                    text = "Ringkasan Keuangan",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            item {
+                GradientCard(
+                    gradient = Brush.linearGradient(listOf(StatusError, Color(0xFFC084FC)))
+                ) {
+                    Text(
+                        text = "Total Denda Belum Lunas",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White.copy(0.9f)
+                    )
+                    Text(
+                        text = (state.dashboard?.totalDendaBelumLunas ?: 0.0).toRupiah(),
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MetricItem(label: String, value: String, icon: ImageVector, color: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(color.copy(0.1f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, null, tint = color, modifier = Modifier.size(18.dp))
+        }
+        Spacer(Modifier.width(8.dp))
+        Column {
+            Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+private fun SimpleBarChartItem(label: String, value: Int, maxValue: Int) {
+    val progress = if (maxValue > 0) value.toFloat() / maxValue else 0f
+    Column {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(label, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+            Text("$value", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+        }
+        Spacer(Modifier.height(4.dp))
+        LinearProgressIndicator(
+            progress = { progress },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(CircleShape),
+            color = Secondary,
+            trackColor = Secondary.copy(0.15f)
+        )
     }
 }
 

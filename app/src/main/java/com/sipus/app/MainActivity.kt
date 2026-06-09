@@ -211,10 +211,14 @@ fun StaffMainFlow(onLogout: () -> Unit) {
                     when (route) {
                         "scan" -> { currentTab = 2; navController.navigateSingle("staff_scan") }
                         "approvals" -> { currentTab = 1; navController.navigateSingle("staff_approvals"); vm.loadApprovals() }
+                        "analytics" -> navController.navigate("staff_analytics")
                         "visitors" -> navController.navigate("staff_visitors")
                         "search_patron" -> navController.navigate("staff_search_patron")
                     }
                 }, onRefresh = vm::loadDashboard)
+            }
+            composable("staff_analytics") {
+                StaffAnalyticsScreen(state, onBack = { navController.popBackStack() })
             }
             composable("staff_approvals") {
                 ApprovalsScreen(state, onLoad = vm::loadApprovals, onAction = vm::processApproval,
