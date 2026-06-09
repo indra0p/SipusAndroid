@@ -1,0 +1,14 @@
+[
+    {
+        "merged": "com.sipus.app-debug-73:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.sipus.app-main-75:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "com.sipus.app-debug-73:/mipmap-anydpi-v26_ic_launcher_foreground.xml.flat",
+        "source": "com.sipus.app-main-75:/mipmap-anydpi-v26/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.sipus.app-debug-73:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "com.sipus.app-main-75:/mipmap-anydpi-v26/ic_launcher_round.xml"
+    }
+]

@@ -1,0 +1,20 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.sipus.app-mergeDebugResources-71:/values-v16/values-v16.xml",
+            "map": [
+                {
+                    "source": "/home/zv/.gradle/caches/8.11.1/transforms/bd4df1712a3ae305098fe92aab075782/transformed/appcompat-1.6.1/res/values-v16/values-v16.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "5",
+                        "endColumns": "12",
+                        "endOffsets": "223"
+                    }
+                }
+            ]
+        }
+    ]
+}

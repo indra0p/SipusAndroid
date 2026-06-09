@@ -1,0 +1,1 @@
+-keep,allowobfuscation,allowshrinking class com.sipus.feature.staff.StaffViewModel
