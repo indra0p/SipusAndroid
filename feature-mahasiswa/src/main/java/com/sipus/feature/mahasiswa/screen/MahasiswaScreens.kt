@@ -435,50 +435,44 @@ fun BookCatalogScreen(
 ) {
     var query by remember { mutableStateOf(state.searchQuery) }
 
-    Scaffold(
-        topBar = { SipusTopBar("Katalog Buku", onBack = onBack) }
-    ) { padding ->
-        Column(
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            placeholder = { Text("Cari judul buku, pengarang, jenis...") },
+            leadingIcon = { Icon(Icons.Default.Search, null) },
+            trailingIcon = {
+                if (query.isNotEmpty()) {
+                    IconButton(onClick = { query = ""; onSearch("") }) {
+                        Icon(Icons.Default.Clear, null)
+                    }
+                }
+            },
             modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                placeholder = { Text("Cari judul buku, pengarang, jenis...") },
-                leadingIcon = { Icon(Icons.Default.Search, null) },
-                trailingIcon = {
-                    if (query.isNotEmpty()) {
-                        IconButton(onClick = { query = ""; onSearch("") }) {
-                            Icon(Icons.Default.Clear, null)
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                shape = RoundedCornerShape(14.dp),
-                singleLine = true
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(14.dp),
+            singleLine = true
+        )
+
+        LaunchedEffect(query) {
+            if (query.length >= 2 || query.isEmpty()) onSearch(query)
+        }
+
+        when {
+            state.isLoading -> LoadingScreen()
+            state.books.isEmpty() -> EmptyScreen(
+                message = "Tidak ada buku ditemukan di katalog",
+                icon = Icons.Outlined.MenuBook
             )
-
-            LaunchedEffect(query) {
-                if (query.length >= 2 || query.isEmpty()) onSearch(query)
-            }
-
-            when {
-                state.isLoading -> LoadingScreen()
-                state.books.isEmpty() -> EmptyScreen(
-                    message = "Tidak ada buku ditemukan di katalog",
-                    icon = Icons.Outlined.MenuBook
-                )
-                else -> LazyColumn(
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    items(state.books) { book ->
-                        BookItem(book) { onBookClick(book.idBuku) }
-                    }
+            else -> LazyColumn(
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                items(state.books) { book ->
+                    BookItem(book) { onBookClick(book.idBuku) }
                 }
             }
         }
@@ -838,41 +832,35 @@ fun LoansScreen(
         onLoadLoans(tabs[selectedTab].second)
     }
 
-    Scaffold(
-        topBar = { SipusTopBar("Peminjaman Saya", onBack = onBack) }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        ScrollableTabRow(
+            selectedTabIndex = selectedTab,
+            edgePadding = 16.dp
         ) {
-            ScrollableTabRow(
-                selectedTabIndex = selectedTab,
-                edgePadding = 16.dp
-            ) {
-                tabs.forEachIndexed { i, (title, _) ->
-                    Tab(
-                        selected = selectedTab == i,
-                        onClick = { selectedTab = i },
-                        text = { Text(title) }
-                    )
-                }
+            tabs.forEachIndexed { i, (title, _) ->
+                Tab(
+                    selected = selectedTab == i,
+                    onClick = { selectedTab = i },
+                    text = { Text(title) }
+                )
             }
+        }
 
-            when {
-                state.isLoading -> LoadingScreen()
-                state.loans.isEmpty() -> EmptyScreen("Tidak ada peminjaman")
-                else -> LazyColumn(
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    items(state.loans) { loan ->
-                        LoanItem(
-                            loan = loan,
-                            onReturn = { onReturn(loan.idPeminjaman, "baik") },
-                            onExtend = { onExtend(loan.idPeminjaman) }
-                        )
-                    }
+        when {
+            state.isLoading -> LoadingScreen()
+            state.loans.isEmpty() -> EmptyScreen("Tidak ada peminjaman")
+            else -> LazyColumn(
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                items(state.loans) { loan ->
+                    LoanItem(
+                        loan = loan,
+                        onReturn = { onReturn(loan.idPeminjaman, "baik") },
+                        onExtend = { onExtend(loan.idPeminjaman) }
+                    )
                 }
             }
         }

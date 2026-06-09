@@ -4,21 +4,32 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
+import com.sipus.core.ui.component.GradientCard
 import com.sipus.core.ui.component.LoadingScreen
+import com.sipus.core.ui.component.SipusTopBar
 import com.sipus.core.ui.component.StatCard
-import com.sipus.core.ui.theme.SipusTheme
+import com.sipus.core.ui.theme.*
 import com.sipus.core.util.Constants
 import com.sipus.feature.auth.*
 import com.sipus.feature.mahasiswa.MahasiswaViewModel
@@ -81,6 +92,17 @@ fun MahasiswaMainFlow(onLogout: () -> Unit) {
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        topBar = {
+            if (showBottomBar) {
+                val title = when (currentRoute) {
+                    "mhs_books" -> "Katalog Buku"
+                    "mhs_loans" -> "Pinjaman Saya"
+                    "mhs_profile" -> "Profil Saya"
+                    else -> null
+                }
+                title?.let { SipusTopBar(it) }
+            }
+        },
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar {
@@ -94,7 +116,7 @@ fun MahasiswaMainFlow(onLogout: () -> Unit) {
                         icon = { Icon(if (currentTab == 3) Icons.Filled.Person else Icons.Outlined.Person, null) }, label = { Text("Profil") })
                 }
             }
-        }
+        },
     ) { padding ->
         NavHost(navController, "mhs_dashboard", Modifier.padding(padding)) {
             composable("mhs_dashboard") {
@@ -157,6 +179,17 @@ fun StaffMainFlow(onLogout: () -> Unit) {
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        topBar = {
+            if (showBottomBar) {
+                val title = when (currentRoute) {
+                    "mhs_books" -> "Katalog Buku"
+                    "mhs_loans" -> "Pinjaman Saya"
+                    "mhs_profile" -> "Profil Saya"
+                    else -> null
+                }
+                title?.let { SipusTopBar(it) }
+            }
+        },
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar {
@@ -170,7 +203,7 @@ fun StaffMainFlow(onLogout: () -> Unit) {
                         icon = { Icon(if (currentTab == 3) Icons.Filled.Person else Icons.Outlined.Person, null) }, label = { Text("Profil") })
                 }
             }
-        }
+        },
     ) { padding ->
         NavHost(navController, "staff_dashboard", Modifier.padding(padding)) {
             composable("staff_dashboard") {
@@ -212,31 +245,131 @@ fun StaffMainFlow(onLogout: () -> Unit) {
 
 // Profile screen (shared for mahasiswa)
 @Composable
-private fun ProfileScreen(state: com.sipus.feature.mahasiswa.MhsUiState, onLogout: () -> Unit, onBack: () -> Unit) {
+private fun ProfileScreen(
+    state: com.sipus.feature.mahasiswa.MhsUiState,
+    onLogout: () -> Unit,
+    onBack: () -> Unit
+) {
     val p = state.profile
-    com.sipus.core.ui.component.SipusTopBar("Profil", onBack = onBack)
-    if (state.isLoading && p == null) LoadingScreen()
-    else {
-        Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Spacer(Modifier.height(56.dp))
-            Card(shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)) {
-                Column(Modifier.padding(20.dp)) {
-                    Text(p?.nama ?: "-", style = MaterialTheme.typography.headlineSmall, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
-                    Text("${p?.username} • ${p?.role}", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(p?.email ?: "-", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+
+    if (state.isLoading && p == null) {
+        LoadingScreen()
+    } else if (p != null) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Header with Avatar and Basic Info
+            GradientCard(
+                gradient = Brush.linearGradient(listOf(GradientStart, GradientEnd))
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(0.2f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Filled.Person,
+                            null,
+                            tint = Color.White,
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
+                    Spacer(Modifier.width(16.dp))
+                    Column {
+                        Text(
+                            text = p.nama ?: "-",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Text(
+                            text = "${p.role.replaceFirstChar { it.uppercase() }} • ${p.username}",
+                            color = Color.White.copy(0.85f),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                 }
             }
-            p?.stats?.let { s ->
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    StatCard("Aktif", "${s.pinjamanAktif}", Icons.Outlined.BookmarkBorder, com.sipus.core.ui.theme.StatusInfo, Modifier.weight(1f))
-                    StatCard("Selesai", "${s.selesai}", Icons.Outlined.CheckCircle, com.sipus.core.ui.theme.StatusSuccess, Modifier.weight(1f))
+
+            // Stats Row
+            p.stats?.let { s ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    StatCard(
+                        title = "Aktif",
+                        value = "${s.pinjamanAktif}",
+                        icon = Icons.Outlined.BookmarkBorder,
+                        color = StatusInfo,
+                        modifier = Modifier.weight(1f)
+                    )
+                    StatCard(
+                        title = "Selesai",
+                        value = "${s.selesai}",
+                        icon = Icons.Outlined.CheckCircle,
+                        color = StatusSuccess,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
+
+            // Detailed Info
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                )
+            ) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    ProfileInfoRow(Icons.Outlined.Email, "Email", p.email ?: "-")
+                    ProfileInfoRow(Icons.Outlined.Badge, "Username / NIM", p.username)
+                    ProfileInfoRow(Icons.Outlined.VerifiedUser, "Status Akun", p.status ?: "Aktif")
+                }
+            }
+
             Spacer(Modifier.weight(1f))
-            Button(onClick = onLogout, modifier = Modifier.fillMaxWidth().height(50.dp),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = com.sipus.core.ui.theme.StatusError)
-            ) { Icon(Icons.Default.Logout, null); Spacer(Modifier.width(8.dp)); Text("Keluar") }
+
+            // Logout Button
+            Button(
+                onClick = onLogout,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = StatusError)
+            ) {
+                Icon(Icons.Default.Logout, null)
+                Spacer(Modifier.width(8.dp))
+                Text("Keluar dari Akun", fontWeight = FontWeight.Bold)
+            }
+        }
+    } else {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("Gagal memuat profil")
+        }
+    }
+}
+
+@Composable
+private fun ProfileInfoRow(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, value: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon, null, tint = Primary, modifier = Modifier.size(20.dp))
+        Spacer(Modifier.width(12.dp))
+        Column {
+            Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
         }
     }
 }
